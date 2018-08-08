@@ -2,8 +2,9 @@ import tkinter as tk
 
 class Window(tk.Frame):
 
-    def __init__(self):
+    def __init__(self, GeoAlg):
         super().__init__()
+        self.GeoAlg = GeoAlg
         self.points_list = []
         self.MAX_WIDTH = 1280
         self.MAX_HEIGHT = 720
@@ -45,7 +46,7 @@ class Window(tk.Frame):
         self.points_list.append((event.x, event.y))
         self.DrawPoint((event.x, event.y))
 
-        self.PointList = GiftWrap(self.points_list)
+        self.PointList = self.GeoAlg(self.points_list)
         self.DrawAxis()
 
         # Draw points in points_list
@@ -101,7 +102,7 @@ def GiftWrap(inData):
 
 def main():
     root = tk.Tk()
-    DrawingWindow = Window()
+    DrawingWindow = Window(GiftWrap)
     root.geometry(str(DrawingWindow.MAX_WIDTH) + "x" + str(DrawingWindow.MAX_HEIGHT))
     DrawingWindow.canvas.bind("<Button>", DrawingWindow.DrawObj)
     root.mainloop()
