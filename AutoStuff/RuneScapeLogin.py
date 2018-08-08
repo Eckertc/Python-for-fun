@@ -1,6 +1,9 @@
 ## RuneScapeLogin.py logs a user into RuneScape once
 ## the app is open/in-focus and script is ran with login arguments
+## Invalid login is handled, world login defaults to 301 for non-members
 ## Usage Example: RuneScapeLogin.py MyMail@gmail.net BigWombo192!
+## Makes adjustments for Retina Display. Set Variable to False if
+## using a normal Display
 
 import pyautogui as pag
 import sys
