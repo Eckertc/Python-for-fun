@@ -1,35 +1,66 @@
 import tkinter as tk
 
-MAX_WIDTH = 1280
-MAX_HEIGHT = 720
+class Window(tk.Frame):
 
-class Example(tk.Frame):
-
-    def __init__(self, PointList):
+    def __init__(self):
         super().__init__()
-        self.PointList = PointList
+        self.points_list = []
+        self.MAX_WIDTH = 1280
+        self.MAX_HEIGHT = 720
+        self.LINE_COLOR = "#32bf28"
+        self.POINT_COLOR = "#031402"
+        self.AXIS_COLOR = "#b2d8af"
         self.initUI()
 
     def initUI(self):
         self.master.title("Drawing Convex Hull")
         self.pack(fill=tk.BOTH, expand=1)
-        canvas = tk.Canvas(self)
+        self.canvas = tk.Canvas(self)
+        self.DrawAxis()
+        self.canvas.pack(fill=tk.BOTH, expand=1)
+        self.myButton = tk.Button(text="Clear", command=self.clearPoints)
+        self.myButton.pack()
 
+    def clearPoints(self):
+        self.canvas.delete("all")
+        self.DrawAxis()
+        self.points_list.clear()
+
+    def DrawAxis(self):
         # draw axis
-        canvas.create_line(0, MAX_HEIGHT/2, MAX_WIDTH, MAX_HEIGHT/2, fill = "#b2d8af")
-        canvas.create_line(MAX_WIDTH/2, 0, MAX_WIDTH/2, MAX_HEIGHT, fill = "#b2d8af")
+        self.canvas.create_line(0, self.MAX_HEIGHT/2, self.MAX_WIDTH, self.MAX_HEIGHT/2, fill = self.AXIS_COLOR)
+        self.canvas.create_line(self.MAX_WIDTH/2, 0, self.MAX_WIDTH/2, self.MAX_HEIGHT, fill = self.AXIS_COLOR)
+
+    def DrawPoint(self, ovalPoint):
+        self.canvas.create_oval(ovalPoint[0]+1, ovalPoint[1]+1, ovalPoint[0]-1, ovalPoint[1]-1, fill = self.POINT_COLOR)
+
+    def DrawLine(self, p1, p2):
+        self.canvas.create_line(p1[0], p1[1], p2[0], p2[1], fill = self.LINE_COLOR)
+
+    def DrawObj(self, event):
+        self.canvas.delete("all")
+        self.DrawAxis()
+
+        # add point on click event to list and plot point before calculation
+        self.points_list.append((event.x, event.y))
+        self.DrawPoint((event.x, event.y))
+
+        self.PointList = GiftWrap(self.points_list)
+        self.DrawAxis()
+
+        # Draw points in points_list
+        for p in self.points_list:
+            self.DrawPoint(p)
 
         last_point = self.PointList[len(self.PointList) - 1]
         # draw all the edges
         for i in range(0, len(self.PointList)):
             current_point = self.PointList[i]
-            # adjusted cordinates
-            canvas.create_oval(current_point[0] + MAX_WIDTH/2 +1, (-1) * current_point[1] + MAX_HEIGHT/2 +1, current_point[0] + MAX_WIDTH/2 -1, (-1) * current_point[1] + MAX_HEIGHT/2 -1, fill = "#031402")
-            canvas.create_line(current_point[0] + MAX_WIDTH/2, (-1) * current_point[1] + MAX_HEIGHT/2, last_point[0] + MAX_WIDTH/2, (-1) * last_point[1] + MAX_HEIGHT/2, fill = "#32bf28")
-            canvas.pack(fill=tk.BOTH, expand=1)
+            self.DrawLine(current_point, last_point)
+            self.canvas.pack(fill=tk.BOTH, expand=1)
             last_point = current_point
 
-        canvas.pack(fill=tk.BOTH, expand=1)
+        self.canvas.pack(fill=tk.BOTH, expand=1)
 
 def PointIsLeft(vi, vf, point):
     """Returns True for Left, False for Right, and None for colinearself.
@@ -69,15 +100,10 @@ def GiftWrap(inData):
     return outData
 
 def main():
-    points_list = [(7, 7), (7, -7), (-7, -7), (-7, 7), (9, 0), (-9, 0),
-               (0, 9), (0, -9), (0, 0), (1, 2), (-2, 1), (-1, -1),
-               (3, 4), (4, 3), (-5, 4), (6, 5)]
-    #points_list = [(100,100),(-66,-85),(11,-22)]
-
     root = tk.Tk()
-    ex = Example(GiftWrap(points_list))
-    print(ex.PointList)
-    root.geometry(str(MAX_WIDTH) + "x" + str(MAX_HEIGHT))
+    DrawingWindow = Window()
+    root.geometry(str(DrawingWindow.MAX_WIDTH) + "x" + str(DrawingWindow.MAX_HEIGHT))
+    DrawingWindow.canvas.bind("<Button>", DrawingWindow.DrawObj)
     root.mainloop()
 
 
