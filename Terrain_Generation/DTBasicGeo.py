@@ -91,6 +91,8 @@ def main():
                         TOGGLEWIRE = True
                     else:
                         TOGGLEWIRE = False
+                if event.key == pygame.K_esc:
+                    exit()
                 if event.key == pygame.K_r:
                     # randomize points
                     startTime = time.time()
