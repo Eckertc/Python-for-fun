@@ -91,8 +91,6 @@ def main():
                         TOGGLEWIRE = True
                     else:
                         TOGGLEWIRE = False
-                if event.key == pygame.K_esc:
-                    exit()
                 if event.key == pygame.K_r:
                     # randomize points
                     startTime = time.time()
@@ -113,6 +111,9 @@ def main():
 
                     glTranslatef(0.0,0.0, -3.5)
                     glRotatef(40.0, -3, -1, -1)
+                elif event.key == pygame.K_esc:
+                    pygame.quit()
+                    exit()
 
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         glRotatef(1, 0, 0, -1)
