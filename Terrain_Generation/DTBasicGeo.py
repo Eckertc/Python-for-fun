@@ -111,7 +111,7 @@ def main():
 
                     glTranslatef(0.0,0.0, -3.5)
                     glRotatef(40.0, -3, -1, -1)
-                elif event.key == pygame.K_esc:
+                if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     exit()
 
