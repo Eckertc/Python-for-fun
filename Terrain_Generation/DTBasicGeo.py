@@ -1,6 +1,7 @@
 import pygame
 import random
 import time
+import math
 import sys
 from pygame.locals import *
 from OpenGL.GL import *
@@ -54,8 +55,31 @@ def main():
     Sites.append(Point(-1,0,0))
     Sites.append(Point(0,-1,0))
 
+    IsVally = False
+    MountainSpreadX = random.random() * 7
+    MountainSpreadY = MountainSpreadX
+    MountainCenterX = -random.random()
+    MountainCenterY = -random.random()
+
+    IsVally2 = False
+    MountainSpreadX2 = random.random() * 7
+    MountainSpreadY2 = MountainSpreadX2
+    MountainCenterX2 = random.random()
+    MountainCenterY2 = random.random()
+
     for i in range(0, int(sys.argv[1])):
-        Sites.append(Point(getRandomCord(), getRandomCord(), getRandomZ()))
+        # RANDOM HEIGHT METHOD HERE
+        SiteXCord = getRandomCord()
+        SiteYCord = getRandomCord()
+        #SiteZCord = getRandomZ()
+        # CURVE GENERATION HERE
+        # <INSERT CITATION HERE>
+
+        SiteZCord = math.pow((-1), IsVally) * math.exp((-1) * MountainSpreadX * (math.pow((SiteXCord - MountainCenterX), 2)) - MountainSpreadY * (math.pow((SiteYCord - MountainCenterY), 2)))
+
+        SiteZCord += math.pow((-1), IsVally2) * math.exp((-1) * MountainSpreadX2 * (math.pow((SiteXCord - MountainCenterX2), 2)) - MountainSpreadY2 * (math.pow((SiteYCord - MountainCenterY2), 2)))
+
+        Sites.append(Point(SiteXCord, SiteYCord, SiteZCord))
 
     startTime = time.time()
     dt=DT(Sites, CSIZE)
@@ -93,6 +117,19 @@ def main():
                         TOGGLEWIRE = False
                 if event.key == pygame.K_r:
                     # randomize points
+                    Sites.clear()
+                    Sites.append(Point(1,1,0))
+                    Sites.append(Point(1,-1,0))
+                    Sites.append(Point(-1,-1,0))
+                    Sites.append(Point(-1,1,0))
+                    Sites.append(Point(1,0,0))
+                    Sites.append(Point(0,1,0))
+                    Sites.append(Point(-1,0,0))
+                    Sites.append(Point(0,-1,0))
+
+                    for i in range(0, int(sys.argv[1])):
+                        Sites.append(Point(getRandomCord(), getRandomCord(), getRandomZ()))
+
                     startTime = time.time()
                     dt=DT(Sites, CSIZE)
                     dt.triangulate()
@@ -120,7 +157,8 @@ def main():
 
         if TOGGLEWIRE == True:
             TriangleMesh(CalculatedTriangles)
-        TriangleFaces(CalculatedTriangles)
+        else:
+            TriangleFaces(CalculatedTriangles)
         pygame.display.flip()
         pygame.time.wait(10)
 
