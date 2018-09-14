@@ -1,8 +1,20 @@
+# TODO:
+# [] add toggle for scipy algorithm vs bowWat
+# [] larger area of generation
+# [] ability to scroll around and look at terrain
+# [] properly take advantage of OPENGL to reduce lag
+# [] refactor and organize
+# [] add extra small hills/valleys option for more realism
+# [] define vertical scope
+# [] proper color variation in HEIGHT
+
 import pygame
 import random
 import time
 import math
 import sys
+import numpy as np
+from scipy.spatial import Delaunay
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -18,7 +30,6 @@ def TriangleMesh(TriangleList):
         glVertex3fv((i.ptC.x, i.ptC.y, i.ptC.z))
         glVertex3fv((i.ptC.x, i.ptC.y, i.ptC.z))
         glVertex3fv((i.ptA.x, i.ptA.y, i.ptA.z))
-
     glEnd()
 
 def TriangleFaces(TriangleList):
@@ -42,54 +53,64 @@ def getRandomZ():
 def getHeightRGB(Height):
     return (1 * Height.x, 1 * Height.z, 0.7)
 
+def runCalculation(characterTraits):
+        CSIZE = 10000
+        Sites = []
+        # build a aproximate outline
+        Sites.append(Point(1,1,0))
+        Sites.append(Point(1,-1,0))
+        Sites.append(Point(-1,-1,0))
+        Sites.append(Point(-1,1,0))
+        Sites.append(Point(1,0,0))
+        Sites.append(Point(0,1,0))
+        Sites.append(Point(-1,0,0))
+        Sites.append(Point(0,-1,0))
+
+        #Build hill and valley attribute lists
+        IsVallyList = []
+        MountainSpreadListX = []
+        MountainSpreadListY = []
+        MountainCenterListX = []
+        MountainCenterListY = []
+
+        # fill in the mountain data
+        for i in range(0, characterTraits):
+            if random.random() > 0.55:
+                IsVallyList.append(False)
+            else:
+                IsVallyList.append(True)
+            MountainSpreadListX.append(random.random() * 8)
+            MountainSpreadListY.append(MountainSpreadListX[i])
+            MountainCenterListX.append(random.random() * 2 - 1)
+            MountainCenterListY.append(random.random() * 2 - 1)
+
+        for i in range(0, int(sys.argv[1])):
+            # RANDOM HEIGHT METHOD HERE
+            SiteXCord = getRandomCord()
+            SiteYCord = getRandomCord()
+            SiteZCord = 0
+            # Itterate through all the hills and sum the Z component
+            for j in range(0, characterTraits):
+                SiteZCord += ((-1) ** IsVallyList[j]) * math.e ** ((-1) * MountainSpreadListX[j] * \
+                (((SiteXCord - MountainCenterListX[j]) ** 2)) - MountainSpreadListY[j] * \
+                (((SiteYCord - MountainCenterListY[j]) ** 2)))
+            Sites.append(Point(SiteXCord, SiteYCord, SiteZCord))
+
+        startTime = time.time()
+        dt=DT(Sites, CSIZE)
+        dt.triangulate()
+        CalculatedTriangles=dt.get_output_triangles()
+        del dt
+        endTime = time.time()
+
+        print(str(len(CalculatedTriangles)) +" many triangles in DT")
+        print("Calculated in: " + str(endTime - startTime) + " Seconds")
+
+        return CalculatedTriangles
+
+
 def main():
-    CSIZE = 10000
-    Sites = []
-    # build a aproximate outline
-    Sites.append(Point(1,1,0))
-    Sites.append(Point(1,-1,0))
-    Sites.append(Point(-1,-1,0))
-    Sites.append(Point(-1,1,0))
-    Sites.append(Point(1,0,0))
-    Sites.append(Point(0,1,0))
-    Sites.append(Point(-1,0,0))
-    Sites.append(Point(0,-1,0))
-
-    IsVally = False
-    MountainSpreadX = random.random() * 7
-    MountainSpreadY = MountainSpreadX
-    MountainCenterX = -random.random()
-    MountainCenterY = -random.random()
-
-    IsVally2 = False
-    MountainSpreadX2 = random.random() * 7
-    MountainSpreadY2 = MountainSpreadX2
-    MountainCenterX2 = random.random()
-    MountainCenterY2 = random.random()
-
-    for i in range(0, int(sys.argv[1])):
-        # RANDOM HEIGHT METHOD HERE
-        SiteXCord = getRandomCord()
-        SiteYCord = getRandomCord()
-        #SiteZCord = getRandomZ()
-        # CURVE GENERATION HERE
-        # <INSERT CITATION HERE>
-
-        SiteZCord = math.pow((-1), IsVally) * math.exp((-1) * MountainSpreadX * (math.pow((SiteXCord - MountainCenterX), 2)) - MountainSpreadY * (math.pow((SiteYCord - MountainCenterY), 2)))
-
-        SiteZCord += math.pow((-1), IsVally2) * math.exp((-1) * MountainSpreadX2 * (math.pow((SiteXCord - MountainCenterX2), 2)) - MountainSpreadY2 * (math.pow((SiteYCord - MountainCenterY2), 2)))
-
-        Sites.append(Point(SiteXCord, SiteYCord, SiteZCord))
-
-    startTime = time.time()
-    dt=DT(Sites, CSIZE)
-    dt.triangulate()
-    CalculatedTriangles=dt.get_output_triangles()
-    del dt
-    endTime = time.time()
-
-    print(str(len(CalculatedTriangles)) +" many triangles in DT")
-    print("Calculated in: " + str(endTime - startTime) + " Seconds")
+    CalculatedTriangles = runCalculation(int(sys.argv[2]))
 
     pygame.init()
     display = (1280,720)
@@ -117,29 +138,7 @@ def main():
                         TOGGLEWIRE = False
                 if event.key == pygame.K_r:
                     # randomize points
-                    Sites.clear()
-                    Sites.append(Point(1,1,0))
-                    Sites.append(Point(1,-1,0))
-                    Sites.append(Point(-1,-1,0))
-                    Sites.append(Point(-1,1,0))
-                    Sites.append(Point(1,0,0))
-                    Sites.append(Point(0,1,0))
-                    Sites.append(Point(-1,0,0))
-                    Sites.append(Point(0,-1,0))
-
-                    for i in range(0, int(sys.argv[1])):
-                        Sites.append(Point(getRandomCord(), getRandomCord(), getRandomZ()))
-
-                    startTime = time.time()
-                    dt=DT(Sites, CSIZE)
-                    dt.triangulate()
-                    CalculatedTriangles=dt.get_output_triangles()
-                    del dt
-                    endTime = time.time()
-
-                    print(str(len(CalculatedTriangles)) +" many triangles in DT")
-                    print("Calculated in: " + str(endTime - startTime) + " Seconds")
-
+                    CalculatedTriangles = runCalculation(int(sys.argv[2]))
                     pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
                     glEnable(GL_DEPTH_TEST)
                     glEnable(GL_CULL_FACE)
@@ -160,13 +159,13 @@ def main():
         else:
             TriangleFaces(CalculatedTriangles)
         pygame.display.flip()
-        pygame.time.wait(10)
+        #pygame.time.wait(10)
 
 
 
 if __name__ == '__main__':
-    if(len(sys.argv) < 2):
+    if(len(sys.argv) < 3):
         print("Random Point Count Argument Missing")
-        print("Example Usage: Python3 DTBasicGeo.py 500")
+        print("Example Usage: Python3 DTBasicGeo.py [plotCount] [characterTraits]")
         exit()
     main()
