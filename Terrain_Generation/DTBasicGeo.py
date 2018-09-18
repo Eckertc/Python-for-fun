@@ -18,7 +18,8 @@ from scipy.spatial import Delaunay
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from BowWatDT import *
+from HashBowWatDT import *
+#from BowWatDT import *
 
 
 def TriangleMesh(TriangleList):
