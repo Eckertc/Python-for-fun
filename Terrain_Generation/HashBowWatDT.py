@@ -11,6 +11,7 @@ class Point:
        self.x = x
        self.y = y
        self.z = z
+       self.rgb = [0,0,0]
 ##Edge Class
 class Edge:
     start = None

@@ -1,46 +1,56 @@
 # TODO:
 # [] add toggle for scipy algorithm vs bowWat
-# [] larger area of generation
+# [] larger area of generation (possible multi-thread applications)
 # [] ability to scroll around and look at terrain
-# [] properly take advantage of OPENGL to reduce lag
+# [] properly take advantage of modern OPENGL and VBOs to reduce lag
 # [] refactor and organize
-# [] add extra small hills/valleys option for more realism
+# [] add extra small hills/valleys option for more realism in random mode
 # [] define vertical scope
-# [] proper color variation in HEIGHT
+# [] stop drawing duplicate edges in wire mesh render
 
 import pygame
 import random
 import time
 import math
 import sys
+import cv2
 import numpy as np
-from scipy.spatial import Delaunay
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from HashBowWatDT import *
 #from BowWatDT import *
 
+TOGGLE_RANDOM = sys.argv[3]
+IN_FILE = "mountains.jpg"
+if (TOGGLE_RANDOM == "False"):
+    im_gray = cv2.imread(IN_FILE, cv2.IMREAD_GRAYSCALE)
+    im_color = cv2.applyColorMap(im_gray, cv2.COLORMAP_JET)
+
 
 def TriangleMesh(TriangleList):
     glBegin(GL_LINES)
     for i in TriangleList:
+        glColor3fv(i.ptA.rgb)
         glVertex3fv((i.ptA.x, i.ptA.y, i.ptA.z))
+        glColor3fv(i.ptB.rgb)
         glVertex3fv((i.ptB.x, i.ptB.y, i.ptB.z))
         glVertex3fv((i.ptB.x, i.ptB.y, i.ptB.z))
+        glColor3fv(i.ptC.rgb)
         glVertex3fv((i.ptC.x, i.ptC.y, i.ptC.z))
         glVertex3fv((i.ptC.x, i.ptC.y, i.ptC.z))
+        glColor3fv(i.ptA.rgb)
         glVertex3fv((i.ptA.x, i.ptA.y, i.ptA.z))
     glEnd()
 
 def TriangleFaces(TriangleList):
     glBegin(GL_TRIANGLES)
     for i in TriangleList:
-        glColor3fv(getHeightRGB(i.ptA))
+        glColor3fv(i.ptA.rgb)
         glVertex3fv((i.ptA.x, i.ptA.y, i.ptA.z))
-        glColor3fv(getHeightRGB(i.ptB))
+        glColor3fv(i.ptB.rgb)
         glVertex3fv((i.ptB.x, i.ptB.y, i.ptB.z))
-        glColor3fv(getHeightRGB(i.ptC))
+        glColor3fv(i.ptC.rgb)
         glVertex3fv((i.ptC.x, i.ptC.y, i.ptC.z))
     glEnd()
 
@@ -51,8 +61,8 @@ def getRandomCord():
 def getRandomZ():
     return random.random() / float(1.0)
 
-def getHeightRGB(Height):
-    return (1 * Height.x, 1 * Height.z, 0.7)
+def getHeightRGB(X, Z):
+    return (1 * X, 1 * Z, 0.7)
 
 def runCalculation(characterTraits):
         CSIZE = 10000
@@ -90,12 +100,36 @@ def runCalculation(characterTraits):
             SiteXCord = getRandomCord()
             SiteYCord = getRandomCord()
             SiteZCord = 0
-            # Itterate through all the hills and sum the Z component
-            for j in range(0, characterTraits):
-                SiteZCord += ((-1) ** IsVallyList[j]) * math.e ** ((-1) * MountainSpreadListX[j] * \
-                (((SiteXCord - MountainCenterListX[j]) ** 2)) - MountainSpreadListY[j] * \
-                (((SiteYCord - MountainCenterListY[j]) ** 2)))
-            Sites.append(Point(SiteXCord, SiteYCord, SiteZCord))
+
+            # Z component and color component either populated by random gausian or
+            # from the image file loaded
+            if TOGGLE_RANDOM == "True":
+                for j in range(0, characterTraits):
+                    SiteZCord += ((-1) ** IsVallyList[j]) * math.e ** ((-1) * MountainSpreadListX[j] * \
+                    (((SiteXCord - MountainCenterListX[j]) ** 2)) - MountainSpreadListY[j] * \
+                    (((SiteYCord - MountainCenterListY[j]) ** 2)))
+                pointToAdd = Point(SiteXCord, SiteYCord, SiteZCord)
+                pointToAdd.rgb = getHeightRGB(SiteXCord,SiteZCord)
+            elif TOGGLE_RANDOM == "False":
+                im_length, im_width = im_gray.shape
+                im_cord_x = int(SiteXCord * im_width/2)
+                im_cord_y = int(SiteYCord * im_length/2)
+
+                im_red = im_color[im_cord_x][im_cord_y][2] * 256 * 256
+                im_green = im_color[im_cord_x][im_cord_y][1] * 256
+                im_blue = im_color[im_cord_x][im_cord_y][0]
+                SiteZCord = (((im_red + im_green + im_blue) / 16777215) * 2 - 1) * (0.3)
+
+                pointToAdd = Point(SiteXCord, SiteYCord, SiteZCord)
+                pointToAdd.rgb = (float(im_color[im_cord_x][im_cord_y][2] / 256), \
+                 float(im_color[im_cord_x][im_cord_y][1] / 256),                  \
+                 float(im_color[im_cord_x][im_cord_y][0] / 256))
+            else:
+                print("IsRandom Argument Invalid! Use 'True' or 'False'")
+                print("Note: False implies a file is present to be read")
+                print("Example Usage: Python3 DTBasicGeo.py [plotCount] [characterTraits] [IsRandom]")
+                exit(-1)
+            Sites.append(pointToAdd)
 
         startTime = time.time()
         dt=DT(Sites, CSIZE)
@@ -165,8 +199,8 @@ def main():
 
 
 if __name__ == '__main__':
-    if(len(sys.argv) < 3):
-        print("Random Point Count Argument Missing")
-        print("Example Usage: Python3 DTBasicGeo.py [plotCount] [characterTraits]")
+    if(len(sys.argv) < 4):
+        print("Argument Missing!")
+        print("Example Usage: Python3 DTBasicGeo.py [plotCount] [characterTraits] [IsRandom]")
         exit()
     main()

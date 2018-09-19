@@ -6,7 +6,7 @@ import numpy as np
 img = np.zeros((300,512,3), np.uint8)
 cv2.namedWindow('image')
 
-im_gray = cv2.imread("moon.jpg", cv2.IMREAD_GRAYSCALE)
+im_gray = cv2.imread("mountains.jpg", cv2.IMREAD_GRAYSCALE)
 im_color = cv2.applyColorMap(im_gray, cv2.COLORMAP_JET)
 SHOW_COLOR = False
 
@@ -29,7 +29,7 @@ blue = im_color[x_cord][y_cord][2]
 totalHex = red + green + blue
 
 # normalize totalHex
-totalHex = totalHex / 16007746
+totalHex = totalHex / 16777215
 
 print(totalHex)
 
