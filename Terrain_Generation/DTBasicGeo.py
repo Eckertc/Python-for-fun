@@ -7,6 +7,7 @@
 # [] add extra small hills/valleys option for more realism in random mode
 # [] define vertical scope
 # [] stop drawing duplicate edges in wire mesh render
+# [] maintain aspect ratio of image in render
 
 import pygame
 import random
@@ -22,7 +23,7 @@ from HashBowWatDT import *
 #from BowWatDT import *
 
 TOGGLE_RANDOM = sys.argv[3]
-IN_FILE = "mountains.jpg"
+IN_FILE = "img/saltLake.jpg"
 if (TOGGLE_RANDOM == "False"):
     im_gray = cv2.imread(IN_FILE, cv2.IMREAD_GRAYSCALE)
     im_color = cv2.applyColorMap(im_gray, cv2.COLORMAP_JET)
@@ -56,7 +57,7 @@ def TriangleFaces(TriangleList):
 
 
 def getRandomCord():
-    return (random.random() * 2) - 1
+    return (random.random() * 2.0) - 1
 
 def getRandomZ():
     return random.random() / float(1.0)
@@ -67,7 +68,7 @@ def getHeightRGB(X, Z):
 def runCalculation(characterTraits):
         CSIZE = 10000
         Sites = []
-        # build a aproximate outline
+        # build a outline
         Sites.append(Point(1,1,0))
         Sites.append(Point(1,-1,0))
         Sites.append(Point(-1,-1,0))
@@ -96,7 +97,6 @@ def runCalculation(characterTraits):
             MountainCenterListY.append(random.random() * 2 - 1)
 
         for i in range(0, int(sys.argv[1])):
-            # RANDOM HEIGHT METHOD HERE
             SiteXCord = getRandomCord()
             SiteYCord = getRandomCord()
             SiteZCord = 0
@@ -111,19 +111,19 @@ def runCalculation(characterTraits):
                 pointToAdd = Point(SiteXCord, SiteYCord, SiteZCord)
                 pointToAdd.rgb = getHeightRGB(SiteXCord,SiteZCord)
             elif TOGGLE_RANDOM == "False":
-                im_length, im_width = im_gray.shape
-                im_cord_x = int(SiteXCord * im_width/2)
-                im_cord_y = int(SiteYCord * im_length/2)
+                im_length, im_width, zzz = im_color.shape
+                im_cord_x = math.floor(((SiteXCord) * math.floor((im_width - 1)/2)) + math.floor((im_width - 1)/2))
+                im_cord_y = math.floor((((SiteYCord) * math.floor((im_length - 1)/2)) * (-1)) + math.floor((im_length - 1)/2))
 
-                im_red = im_color[im_cord_x][im_cord_y][2] * 256 * 256
-                im_green = im_color[im_cord_x][im_cord_y][1] * 256
-                im_blue = im_color[im_cord_x][im_cord_y][0]
-                SiteZCord = (((im_red + im_green + im_blue) / 16777215) * 2 - 1) * (0.3)
+                im_red = im_color[im_cord_y][im_cord_x][2]
+                im_green = im_color[im_cord_y][im_cord_x][1]
+                im_blue = im_color[im_cord_y][im_cord_x][0]
+                SiteZCord = (((im_red<<16) + (im_green<<8) + im_blue) / 16777215) * (0.5)
 
                 pointToAdd = Point(SiteXCord, SiteYCord, SiteZCord)
-                pointToAdd.rgb = (float(im_color[im_cord_x][im_cord_y][2] / 256), \
-                 float(im_color[im_cord_x][im_cord_y][1] / 256),                  \
-                 float(im_color[im_cord_x][im_cord_y][0] / 256))
+                pointToAdd.rgb = (float(im_color[im_cord_y][im_cord_x][2] / 256), \
+                 float(im_color[im_cord_y][im_cord_x][1] / 256),                  \
+                 float(im_color[im_cord_y][im_cord_x][0] / 256))
             else:
                 print("IsRandom Argument Invalid! Use 'True' or 'False'")
                 print("Note: False implies a file is present to be read")
@@ -201,6 +201,6 @@ def main():
 if __name__ == '__main__':
     if(len(sys.argv) < 4):
         print("Argument Missing!")
-        print("Example Usage: Python3 DTBasicGeo.py [plotCount] [characterTraits] [IsRandom]")
+        print("Example Usage: python3 DTBasicGeo.py [plotCount] [characterTraits] [IsRandom]")
         exit()
     main()
