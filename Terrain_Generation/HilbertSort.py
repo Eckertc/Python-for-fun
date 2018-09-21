@@ -1,5 +1,6 @@
 # Hilbert sorting recursive algorithm
-# Takes in a List of Point
+# Takes in a List of Point and max <TRCorner>
+# positive x and y from (0,0) <BLCorner>
 
 import random
 
@@ -17,7 +18,6 @@ class Point:
        self.rgb = [0,0,0]
 
 class HilbertSort:
-    ## pass a dict in for verticies
     def __init__(self, vertices, max):
         # vertices is a list of cordinate tupples
         self.vertices = vertices
