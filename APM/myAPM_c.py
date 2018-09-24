@@ -1,4 +1,5 @@
 # client application for detecting mouse clicks
+# dependent on pynput, install with: pip3 install pynputs
 
 import sys
 import socket
